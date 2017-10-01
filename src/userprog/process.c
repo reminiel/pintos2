@@ -197,6 +197,9 @@ struct Elf32_Phdr
 #define PF_W 2          /* Writable. */
 #define PF_R 4          /* Readable. */
 
+// Values for argument parsing.
+#define WORD_SIZE 4
+
 static bool setup_stack (void **esp, const char *file_name, char **stack_token);
 static bool validate_segment (const struct Elf32_Phdr *, struct file *);
 static bool load_segment (struct file *file, off_t ofs, uint8_t *upage,
@@ -449,10 +452,47 @@ setup_stack (void **esp, const char *file_name, char **stack_token)
   //Allocate page and parse file name
   char *token;
   char **argv = palloc_get_page(0);
+  int argc = 0, i;
   if (argv == NULL) return success;
-  //Implement here
-
-
+  token = (char *)file_name;
+  //Initialize token and save it into page
+  while(token != null)
+    {
+      argv[argc] = token;
+      argc++;
+      token = strtok_r(NULL, " ", stack_token);
+    }
+  //copy parsed arguments to stack
+  i = argc;
+  while(i > 0)
+    {
+      i--;
+      *esp -= strlen(argv[i]) + 1;
+      memcpy(*esp, &argv[i], strlen(argv[i]) + 1);
+      argv[i] = (char *)*esp;
+    }
+  argv[argc] = 0;
+  //Word_align should be implemented
+  while((size_t)esp % 4)
+    {
+      *esp = 0;
+      esp--;
+    }
+  i = argc + 1;
+  while(i > 0)
+    {
+      i--;
+      *esp -= sizeof(char *);
+      memcpy(*esp, &argv[i], sizeof(char *));
+    }
+  token = *esp;
+  *esp -= sizeof(char **);
+  memcpy(*esp, &token, sizeof(char *));
+  *esp -= sizeof(int);
+  memcpy(*esp, &argc, sizeof(int));
+  *esp -= sizeof(void *);
+  memcpy(*esp, &argv[argc], sizeof(void *));
+  palloc_free_page (argv);
   return success;
 }
 
