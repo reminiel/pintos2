@@ -20,7 +20,7 @@
 #include "threads/vaddr.h"
 
 static thread_func start_process NO_RETURN;
-static bool load (const char *cmdline, char **stack_token, void (**eip) (void), void **esp);
+static bool load (const char *file_name, char **stack_token, void (**eip) (void), void **esp);
 
 /* Starts a new thread running a user program loaded from
    FILENAME.  The new thread may be scheduled (and may even exit)
@@ -453,7 +453,11 @@ setup_stack (void **esp, const char *file_name, char **stack_token)
   char *token;
   char **argv = palloc_get_page(0);
   int argc = 0, i;
-  if (argv == NULL) return success;
+  if (argv == NULL)
+    {
+      palloc_free_page(kpage);
+      return false;
+    }
   token = (char *)file_name;
   //Initialize token and save it into page
   while(token != NULL)
