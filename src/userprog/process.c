@@ -456,7 +456,7 @@ setup_stack (void **esp, const char *file_name, char **stack_token)
   if (argv == NULL) return success;
   token = (char *)file_name;
   //Initialize token and save it into page
-  while(token != null)
+  while(token != NULL)
     {
       argv[argc] = token;
       argc++;
