@@ -17,7 +17,7 @@ syscall_init (void)
   intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
 }
 
-
+static void
 syscall_handler (struct intr_frame *f)
 {
   printf ("system call!\n");
@@ -66,5 +66,5 @@ static void sys_halt(void)
 
 static void sys_exec(const char *cmd_line)
   {
-    return pid = process_execute(cmd_line);
+    return process_execute(cmd_line);
   }
