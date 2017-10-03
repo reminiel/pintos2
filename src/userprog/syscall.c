@@ -6,6 +6,7 @@
 
 //System call functions
 static void sys_halt (void);
+static void sys_exec(const char *cmd_line);
 
 //System call handler
 static void syscall_handler (struct intr_frame *);
@@ -20,7 +21,6 @@ syscall_init (void)
 syscall_handler (struct intr_frame *f)
 {
   printf ("system call!\n");
-  //Implement here
   int i = 0, args[4];
   while(i < 4)
     {
@@ -32,7 +32,10 @@ syscall_handler (struct intr_frame *f)
       case SYS_HALT:
         sys_halt();
         break;
+      case SYS_EXIT:
+        break;
       case SYS_EXEC:
+        sys_exec((char*) args[1]);
         break;
       case SYS_WAIT:
         break;
@@ -56,7 +59,12 @@ syscall_handler (struct intr_frame *f)
         break;
     }
 }
-void sys_halt(void)
+static void sys_halt(void)
   {
     shutdown_power_off();
+  }
+
+static void sys_exec(const char *cmd_line)
+  {
+    return pid = process_execute(cmd_line);
   }
