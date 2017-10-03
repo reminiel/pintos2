@@ -3,6 +3,7 @@
 #include <syscall-nr.h>
 #include "threads/interrupt.h"
 #include "threads/thread.h"
+#include "threads/init.h"
 
 //System call functions
 static void sys_halt (void);
@@ -61,7 +62,7 @@ syscall_handler (struct intr_frame *f)
 }
 static void sys_halt(void)
   {
-    shutdown_power_off();
+    power_off();
   }
 
 static void sys_exec(const char *cmd_line)
