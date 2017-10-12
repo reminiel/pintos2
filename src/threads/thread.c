@@ -170,6 +170,9 @@ thread_create (const char *name, int priority,
   struct switch_entry_frame *ef;
   struct switch_threads_frame *sf;
   tid_t tid;
+  struct process_info *newproc;
+  struct thread *curr = thread_current();
+  struct semaphore tmp_sema;
 
   ASSERT (function != NULL);
 
@@ -195,6 +198,17 @@ thread_create (const char *name, int priority,
   /* Stack frame for switch_threads(). */
   sf = alloc_frame (t, sizeof *sf);
   sf->eip = switch_entry;
+
+  /* adding process_info struct */
+  newproc = malloc(sizeof(struct process_info));
+  newproc->pid = tid;
+  newproc->wait = false;
+  newproc->exit = false;
+  newproc->parent = curr;
+  newproc->sema = sema_init()
+  list_push_back (&curr->listof_child, &newproc->elem);
+  sema_init(&tmp_sema, 1);
+  t->proc = tmp_sema;
 
   /* Add to run queue. */
   thread_unblock (t);

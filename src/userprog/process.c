@@ -88,8 +88,29 @@ start_process (void *f_name)
    This function will be implemented in problem 2-2.  For now, it
    does nothing. */
 int
-process_wait (tid_t child_tid UNUSED)
+process_wait (tid_t child_tid)
 {
+  struct thread *curr = thread_current();
+  struct list_elem *e;
+
+  // traversing current thread's children
+  e = list_begin(&curr->listof_child);
+  for (e = list_begin (&curr->listof_child); e != list_end (&curr->listof_child); e = list_next (e))
+  {
+    p = list_entry(e, struct process_info, elem);
+    // check whether pid process is a child of current thread
+    if (p-> pid == child_tid)
+    {
+      // check whether wait() is already called, process does not exited
+      if(!p->wait && !p->exit)
+      {
+        //blocking current thread
+        sema_down(&p->sema);
+      }
+    }
+  }
+
+  // pid process is not a child of curr
   return -1;
 }
 

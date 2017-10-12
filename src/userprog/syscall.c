@@ -4,8 +4,10 @@
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 #include "threads/init.h"
+#include "threads/vaddr.h"
 #include "devices/shutdown.h"
 #include "userprog/process.h"
+#include "userprog/pagedir.c"
 
 //System call functions
 static void sys_halt (void);
@@ -37,11 +39,14 @@ syscall_handler (struct intr_frame *f)
         sys_halt();
         break;
       case SYS_EXIT:
+        sys_wait(args[1]);
         break;
       case SYS_EXEC:
-        sys_exec((char*) args[1]);
+        ptr_is_valid((const void *) args[1]);
+        f->eax = sys_exec((char*) args[1]);
         break;
       case SYS_WAIT:
+        f->eax = sys_wait(args[1]);
         break;
       // file system
       case SYS_CREATE:
@@ -71,13 +76,37 @@ syscall_handler (struct intr_frame *f)
  * new struct : process_info
  * it contains pid, wait information, status(?)
  *
- * thread has two new features : parent thread*, list of child_process
+ * thread has two new features : proc(process_info struct), list of child_process
+ *
+ *                          +<---------parent<------------+
+ *   (procA) <--proc--- (threadA) ---listof_child--> [ (procB)->(procC)->(procD)... ]
+ *                                                  upward|  upward|  upward|
+ *                                                    (threadB)(threadC)(threadD)
  *
  * accessing to the child process : use list of child_process
- * accessing to parent process : use parent
+ * accessing to parent process : use parent in proc struct element
  */
 
-/* TODO : valid addr checker */
+
+// valid address checker for user program pointer
+// (1) null? (2) above PHYS_BASE? (3) unmapped memory?
+static void ptr_is_valid(const void *vaddr)
+{
+  static struct thread *curr = thread_current();
+
+  // If given addr is invalid, exit(-1)
+  if (!is_user_vaddr ((void *) vaddr) || !vaddr || !pagedir_get_page (curr->pagedir, vaddr)
+  )
+  {
+    sys_exit(-1);
+  }
+}
+
+/* Traverse the user’s page tables
+ * The valid address should have the corresponding PTE (page table entry)
+ * “Present” flag in the PTE should be set
+ * Refer to userprog/pagedir.c, threads/vaddr.h, and threads/pte.h
+ */
 
 
 static void sys_halt(void)
@@ -88,33 +117,31 @@ static void sys_halt(void)
 static void sys_exit(int status)
   {
     struct thread *t = current_thread();
-    struct thread *parent = t->parent;
-    struct list child_list = t->listof_child;
+    struct thread *parent = t->proc->parent;
 
     struct list_elem *e; // for list traversing
     struct process_info *p;
 
     // process information modification
-    t->process_info->exit = true;
+    t->proc->exit = true;
 
     // modify its children process information
     // and remove child_list (they become orphaned threads)
-    e = list_begin(&child_list);
-    for (e = list_begin (&child_list); e != list_end (&child_list); e = list_remove (e))
+    e = list_begin(&t->listof_child);
+    for (e = list_begin (&t->listof_child); e != list_end (&t->listof_child); e = list_remove (e))
     {
       p = list_entry(e, struct process_info, elem);
       p->parent = NULL;
     }
 
-    // status passing ; passing to eax???
     if (t->parent == NULL)
     {
-      print("return to the kernel(how?)\n");
+      printf ("return to the kernel(how?)\n");
     }
     else
     {
-      t->process_info->status = status;
-      print("return to the parent(how?)\n");
+      t->proc->status = status;
+      printf ("return to the parent(how?)\n");
     }
 
     // process modify ends, terminating thread
@@ -122,10 +149,24 @@ static void sys_exit(int status)
     break;
   }
 
-
-static void sys_exec(const char *cmd_line)
+static pid_t sys_exec(const char *cmd_line)
   {
+    // use process_execute for creating process & corresponding thread
+    // Part for handling & creating process_info struct is in thread_create
+    pid_t pid = process_execute(cmd_line);
 
-    // generate processinfo
-    return process_execute(cmd_line);
+    // checking children's exec status
+    // if child's exec is not yet loaded ; have to wait(cannot return)
+
+
+    // do something
+
+    return pid;
+  }
+
+static int sys_wait(pid_t pid)
+  {
+    // wait for a child process with pid
+    // Returns the status that pid passed to exit. -1 otherwise.
+    return process_wait();
   }
