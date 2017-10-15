@@ -5,8 +5,6 @@
 #include <list.h>
 #include <stdint.h>
 #include "threads/synch.h"
-#include "userprog/process.h"
-
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -22,7 +20,7 @@ enum thread_status
 //typedef int tid_t;
 //#define TID_ERROR ((tid_t) -1)          /* Error value for tid_t. */
 
-/* Thread priorities. */
+/* Thread priorities. */()
 #define PRI_MIN 0                       /* Lowest priority. */
 #define PRI_DEFAULT 31                  /* Default priority. */
 #define PRI_MAX 63                      /* Highest priority. */
@@ -108,6 +106,25 @@ struct thread
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
   };
+
+
+
+// process_info struct
+// stores information about wait, exit, status..
+struct process_info
+{
+    int pid;                    /* process id */
+    int status;                 /* process status */
+    bool wait;
+    bool exit;
+    struct thread* parent;      /* parent thread */
+    struct list_elem elem;      /* for list element */
+};
+
+
+
+
+
 
 /* If false (default), use round-robin scheduler.
    If true, use multi-level feedback queue scheduler.
