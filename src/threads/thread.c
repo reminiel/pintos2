@@ -455,7 +455,7 @@ init_thread (struct thread *t, const char *name, int priority)
   sema_init(&t->exec_sema, 0);
   sema_init(&t->wait_sema, 0);
 
-  list_init(listof_child);
+  list_init(&t->listof_child);
 
 }
 

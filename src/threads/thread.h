@@ -4,6 +4,9 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
+#include "threads/synch.h"
+#include "userprog/process.h"
+
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -16,8 +19,8 @@ enum thread_status
 
 /* Thread identifier type.
    You can redefine this to whatever type you like. */
-typedef int tid_t;
-#define TID_ERROR ((tid_t) -1)          /* Error value for tid_t. */
+//typedef int tid_t;
+//#define TID_ERROR ((tid_t) -1)          /* Error value for tid_t. */
 
 /* Thread priorities. */
 #define PRI_MIN 0                       /* Lowest priority. */
@@ -92,9 +95,10 @@ struct thread
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
 
+    uint32_t *pagedir;
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
-    uint32_t *pagedir;                  /* Page directory. */
+    //uint32_t *pagedir;                  /* Page directory. */
     struct list listof_child;           /* list of child process */
     struct process_info proc;           /* thread's process information */
     struct semaphore exec_sema;         /* semaphore for load() sync.*/
