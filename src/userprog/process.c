@@ -31,6 +31,7 @@ process_execute (const char *file_name)
 {
   char *fn_copy;
   tid_t tid;
+  struct thread * curr = thread_current();
 
   /* Make a copy of FILE_NAME.
      Otherwise there's a race between the caller and load(). */
@@ -42,7 +43,12 @@ process_execute (const char *file_name)
   /* Create a new thread to execute FILE_NAME. */
   tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
   if (tid == TID_ERROR)
+  {
     palloc_free_page (fn_copy);
+  }
+  // if this procedure successfully ends, sema up for parent process
+  sema_up(&curr->exec_sema);
+
   return tid;
 }
 
@@ -92,6 +98,7 @@ process_wait (tid_t child_tid)
 {
   struct thread *curr = thread_current();
   struct list_elem *e;
+  int status = -1; // return value
 
   // traversing current thread's children
   e = list_begin(&curr->listof_child);
@@ -105,13 +112,18 @@ process_wait (tid_t child_tid)
       if(!p->wait && !p->exit)
       {
         //blocking current thread
-        sema_down(&p->sema);
+        sema_down(&curr->wait_sema);
       }
+      // when child process exited, sema_up call happened
+      // at the end of the wait, parent will delete children's process info
+
+      status = p->status;
+      list_remove(e);
+      free(p);
+
     }
   }
-
-  // pid process is not a child of curr
-  return -1;
+  return status;
 }
 
 /* Free the current process's resources. */

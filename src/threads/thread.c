@@ -205,10 +205,7 @@ thread_create (const char *name, int priority,
   newproc->wait = false;
   newproc->exit = false;
   newproc->parent = curr;
-  newproc->sema = sema_init()
   list_push_back (&curr->listof_child, &newproc->elem);
-  sema_init(&tmp_sema, 1);
-  t->proc = tmp_sema;
 
   /* Add to run queue. */
   thread_unblock (t);
@@ -454,6 +451,12 @@ init_thread (struct thread *t, const char *name, int priority)
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
   t->magic = THREAD_MAGIC;
+  // semaphore and child list initialization
+  sema_init(&t->exec_sema, 0);
+  sema_init(&t->wait_sema, 0);
+
+  list_init(listof_child);
+
 }
 
 /* Allocates a SIZE-byte frame at the top of thread T's stack and

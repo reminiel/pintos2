@@ -134,14 +134,10 @@ static void sys_exit(int status)
       p->parent = NULL;
     }
 
-    if (t->parent == NULL)
-    {
-      printf ("return to the kernel(how?)\n");
-    }
-    else
+    if (t->parent != NULL)
     {
       t->proc->status = status;
-      printf ("return to the parent(how?)\n");
+      printf ("return to the parent\n");
     }
 
     // process modify ends, terminating thread
@@ -153,14 +149,17 @@ static pid_t sys_exec(const char *cmd_line)
   {
     // use process_execute for creating process & corresponding thread
     // Part for handling & creating process_info struct is in thread_create
+    struct thread * curr = thread_current();
     pid_t pid = process_execute(cmd_line);
 
-    // checking children's exec status
     // if child's exec is not yet loaded ; have to wait(cannot return)
+    // use semaphore for synchronization ;
+    // sema down when loading starts, sema up when loading finishes
+    sema_down(&curr->exec_sema);
 
-
-    // do something
-
+    if (pid == TID_ERROR) {
+      return -1;
+    }
     return pid;
   }
 

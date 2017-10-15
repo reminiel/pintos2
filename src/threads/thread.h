@@ -97,6 +97,8 @@ struct thread
     uint32_t *pagedir;                  /* Page directory. */
     struct list listof_child;           /* list of child process */
     struct process_info proc;           /* thread's process information */
+    struct semaphore exec_sema;         /* semaphore for load() sync.*/
+    struct semaphore wait_sema;         /* semaphore for wait() */
 #endif
 
     /* Owned by thread.c. */

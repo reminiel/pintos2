@@ -18,7 +18,6 @@ struct process_info
     bool wait;
     bool exit;
     struct thread* parent;      /* parent thread */
-    struct semaphore sema;      /* semaphore for sync. */
     struct list_elem elem;      /* for list element */
 };
 
